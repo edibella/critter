@@ -1,6 +1,6 @@
 {
   "name": "critter",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Matlab package for iterative image reconstruction",
   "scripts": {
     "postinstall": "node scripts/rename.js"
