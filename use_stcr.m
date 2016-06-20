@@ -1,11 +1,15 @@
 function imageOutput = use_stcr(Data, Opts)
   % Check Data struct
   requiredFields = { 'kSpace', 'fftObj', 'cartesianSize' };
-  Critter.verify_struct(Data, requiredFields, 'Data');
+  verify_struct(Data, requiredFields, 'Data');
 
   % Check Opts struct
   requiredFields = { 'Weights' };
-  Critter.verify_struct(Opts, requiredFields, 'Opts');
+  verify_struct(Opts, requiredFields, 'Opts');
+
+  % Check Weights Struct
+  requiredFields = { 'temporal', 'spatial', 'fidelity' };
+  verify_struct(Opts.Weights, requiredFields, 'Opts.Weights');
 
   % STCR is a 3D method, so first reshape to 4D
   cartSize = Data.cartesianSize;

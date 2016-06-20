@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/edibella/critter#readme",
   "dependencies": {
-    "matlab-spec": "^2.0.0",
+    "matlab-spec": "^2.1.2",
     "fft-tools": "^0.0.0"
   }
 }

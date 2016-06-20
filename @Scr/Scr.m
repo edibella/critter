@@ -3,6 +3,9 @@ classdef Scr < handle
     BETA_SQUARED = 1e-8;
     STEP_SIZE = 0.5;
     N_ITERATIONS = 70;
+    % These methods are scale sensitive, experimentally we find that
+    % rescaling to bring the max down to a 10^1 order of magnitude is about
+    % right, eventually that finding turned into this magic number:
     MAGIC_SCALE_NUMBER = 4;
   end
   properties
@@ -12,6 +15,7 @@ classdef Scr < handle
     imageInput
     nIterations
     debug
+    stepSize
     isStcr
 
     scaleFactor
@@ -37,6 +41,12 @@ classdef Scr < handle
         self.nIterations = Opts.nIterations;
       else
         self.nIterations = self.N_ITERATIONS;
+      end
+
+      if isfield(Opts, 'stepSize')
+        self.stepSize = Opts.stepSize;
+      else
+        self.stepSize = self.STEP_SIZE;
       end
 
       if isfield(Opts, 'debug')
@@ -66,13 +76,21 @@ classdef Scr < handle
     function imageEstimate = iteratively_reconstruct(self)
       self.pre_allocate_loop_variables();
       for iIteration = 1:self.nIterations
+        % fidelity
         self.update_fidelity_term();
-        self.update_spatial_term();
-        if self.isStcr
+        % spatial
+        if self.Weights.spatial ~= 0
+          self.update_spatial_term();
+        end
+        % temporal
+        if self.isStcr & self.Weights.temporal ~= 0
           self.update_temporal_term();
         end
+        % Loop update
         self.update_image_estimate();
-        self.update_masked_image_estimate();
+        self.update_masked_image_estimate(iIteration);
+
+        % debug
         if self.debug
           self.update_debug_vals(iIteration);
           self.plot_norms(iIteration);
@@ -100,12 +118,14 @@ classdef Scr < handle
     end
 
     function update_image_estimate(self)
-      imageUpdate = self.STEP_SIZE * ...
-                        (self.fidelityUpdateTerm + self.spatialUpdateTerm);
+      imageUpdate = self.stepSize * self.fidelityUpdateTerm;
+      if ~isempty(self.spatialUpdateTerm)
+        imageUpdate = imageUpdate + self.stepSize * self.spatialUpdateTerm;
+      end
       self.imageEstimate = self.imageEstimate + imageUpdate;
     end
 
-    function update_masked_image_estimate(self)
+    function update_masked_image_estimate(self, iIteration)
       kSpaceEstimate = self.fftObject * self.imageEstimate;
       self.maskedImageEstimate = self.fftObject' * kSpaceEstimate;
     end

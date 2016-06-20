@@ -1,6 +1,6 @@
 classdef Stcr < Critter.Scr
   properties
-    temporalUpdateTerm
+    temporalUpdateTerm = 0
     temporalNorm
     temporalArray
   end
@@ -24,8 +24,10 @@ classdef Stcr < Critter.Scr
       % Call super
       update_image_estimate@Critter.Scr(self);
       % Add temporal term
-      imageUpdate = self.STEP_SIZE * self.temporalUpdateTerm;
-      self.imageEstimate = self.imageEstimate + imageUpdate;
+      if ~isempty(self.temporalUpdateTerm)
+        imageUpdate = self.stepSize * self.temporalUpdateTerm;
+        self.imageEstimate = self.imageEstimate + imageUpdate;
+      end
     end
 
     function update_temporal_term(self)
