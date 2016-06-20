@@ -1,15 +1,15 @@
 function imageOutput = use_scr(Data, Opts)
   % Check Data struct
   requiredFields = { 'kSpace', 'fftObj', 'cartesianSize' };
-  Critter.verify_struct(Data, requiredFields, 'Data');
+  verify_struct(Data, requiredFields, 'Data');
 
   % Check Opts struct
   requiredFields = { 'Weights' };
-  Critter.verify_struct(Opts, requiredFields, 'Opts');
+  verify_struct(Opts, requiredFields, 'Opts');
 
   % Check Opts.Weights struct
   requiredFields = { 'spatial', 'fidelity' };
-  Critter.verify_struct(Opts.Weights, requiredFields, 'Opts.Weights');
+  verify_struct(Opts.Weights, requiredFields, 'Opts.Weights');
 
   % SCR is a 2D method, so first reshape to 3D
   cartSize = Data.cartesianSize;

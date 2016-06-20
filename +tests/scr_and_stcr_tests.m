@@ -1,6 +1,7 @@
 function scr_and_stcr_tests(Tester)
   % Test data comes from some gated cardiac perfusion data that has been PCA'd
-  % the PreInterpolator package was used to obtain suitable cartesian data and a mask.
+  % the Gridder package was used to obtain suitable cartesian data and a mask.
+  % It is in the same orientation that came from the scanner, flipped left-right from standard orientation.
 
   % Load test data, create needed variables
   % `testData4D`, `testKMask4D`
@@ -10,7 +11,7 @@ function scr_and_stcr_tests(Tester)
   Data.kSpace = testData4D;
   kMaskCoil = testKMask4D(:,:,:,1);
   Data.fftObj = FftTools.MaskFft(kMaskCoil);
-  Data.cartesianSize = [288, 288, 7, 3];;
+  Data.cartesianSize = size(testData4D);
 
   % Create Weights struct
   Opts.Weights.fidelity = 1;
