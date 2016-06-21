@@ -90,11 +90,6 @@ classdef BaseReconstructor < handle
     end
     function apply_constraints(iIteration)
     end
-    function update_image_estimate(iIteration)
-      % This function should provide or modify a previously
-      % provided self.ImageEstimate
-      self.imageEstimate = 1;
-    end
     function debug_in_loop(iIteration)
     end
   end
