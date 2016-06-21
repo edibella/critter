@@ -9,6 +9,10 @@ classdef Stcr < Critter.Scr
       self@Critter.Scr(kSpaceInput, fftObj, Opts)
     end
 
+    % function finalImage = reconstruct(self)
+    %   finalImage = reconstruct@Critter.Scr(self);
+    % end
+
     function pre_allocate_loop_variables(self)
       % Call super
       pre_allocate_loop_variables@Critter.Scr(self);
@@ -18,6 +22,14 @@ classdef Stcr < Critter.Scr
       if self.debug
         self.temporalNorm = zeros(1, self.nIterations);
       end
+    end
+
+    function imageEstimate = apply_constraints(self, iIteration)
+      self.update_fidelity_term();
+      self.update_spatial_term();
+      self.update_temporal_term();
+      self.update_image_estimate();
+      self.update_masked_image_estimate(iIteration);
     end
 
     function update_image_estimate(self)
