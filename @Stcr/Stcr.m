@@ -9,10 +9,6 @@ classdef Stcr < Critter.Scr
       self@Critter.Scr(kSpaceInput, fftObj, Opts)
     end
 
-    % function finalImage = reconstruct(self)
-    %   finalImage = reconstruct@Critter.Scr(self);
-    % end
-
     function pre_allocate_loop_variables(self)
       % Call super
       pre_allocate_loop_variables@Critter.Scr(self);

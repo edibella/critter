@@ -3,9 +3,8 @@ classdef BaseReconstructor < handle
     BETA_SQUARED = 1e-8;
     STEP_SIZE = 0.5;
     N_ITERATIONS = 70;
-    % These methods are scale sensitive, experimentally we find that
-    % rescaling to bring the max down to a 10^1 order of magnitude is about
-    % right, eventually that finding turned into this magic number:
+    % These methods are scale sensitive so we arbitrarily rescale the image so
+    % that the max value is 4 for consistency's sake
     MAGIC_SCALE_NUMBER = 4;
   end
   properties

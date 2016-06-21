@@ -14,10 +14,6 @@ classdef Scr < Critter.BaseReconstructor
       self@Critter.BaseReconstructor(kSpaceInput, fftObj, Opts)
     end
 
-    % function finalImage = reconstruct(self)
-    %   finalImage = reconstruct@Critter.BaseReconstructor(self);
-    % end
-
     function pre_allocate_loop_variables(self)
       self.maskedImageEstimate = self.imageEstimate;
       if(self.debug)
