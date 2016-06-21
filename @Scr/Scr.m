@@ -22,7 +22,7 @@ classdef Scr < Critter.BaseReconstructor
       end
     end
 
-    function imageEstimate = apply_constraints(self, iIteration)
+    function apply_constraints(self, iIteration)
       self.update_fidelity_term();
       self.update_spatial_term();
       self.update_image_estimate();
