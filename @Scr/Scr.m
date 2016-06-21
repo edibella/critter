@@ -1,25 +1,5 @@
-classdef Scr < handle
-  properties (Constant)
-    BETA_SQUARED = 1e-8;
-    STEP_SIZE = 0.5;
-    N_ITERATIONS = 70;
-    % These methods are scale sensitive, experimentally we find that
-    % rescaling to bring the max down to a 10^1 order of magnitude is about
-    % right, eventually that finding turned into this magic number:
-    MAGIC_SCALE_NUMBER = 4;
-  end
+classdef Scr < Critter.BaseReconstructor
   properties
-    kSpaceInput
-    fftObject
-    Weights
-    imageInput
-    nIterations
-    debug
-    stepSize
-    isStcr
-
-    scaleFactor
-    imageEstimate
     maskedImageEstimate
     fidelityUpdateTerm
     spatialUpdateTerm
@@ -31,80 +11,27 @@ classdef Scr < handle
   end
   methods
     function self = Scr(kSpaceInput, fftObj, Opts)
-      self.kSpaceInput = single(kSpaceInput);
-      self.fftObject = fftObj;
-      self.Weights = Opts.Weights;
-      self.isStcr = isa(self, 'Critter.Stcr');
-
-      % TODO: Make this dynamic given defaults from constants
-      if isfield(Opts, 'nIterations')
-        self.nIterations = Opts.nIterations;
-      else
-        self.nIterations = self.N_ITERATIONS;
-      end
-
-      if isfield(Opts, 'stepSize')
-        self.stepSize = Opts.stepSize;
-      else
-        self.stepSize = self.STEP_SIZE;
-      end
-
-      if isfield(Opts, 'debug')
-        self.debug = Opts.debug;
-      else
-        self.debug = false;
-      end
-    end
-
-    function finalImage = reconstruct(self)
-      self.create_image_input();
-      self.scale_image_input();
-      self.iteratively_reconstruct();
-      finalImage = self.unscale_image();
-    end
-
-    function create_image_input(self)
-      self.imageInput = self.fftObject' * self.kSpaceInput;
-    end
-
-    function scale_image_input(self)
-      maxIntensity = max(abs(self.imageInput(:)));
-      self.scaleFactor = self.MAGIC_SCALE_NUMBER / maxIntensity;
-      self.imageInput = single(self.imageInput * self.scaleFactor);
-    end
-
-    function imageEstimate = iteratively_reconstruct(self)
-      self.pre_allocate_loop_variables();
-      for iIteration = 1:self.nIterations
-        % fidelity
-        self.update_fidelity_term();
-        % spatial
-        if self.Weights.spatial ~= 0
-          self.update_spatial_term();
-        end
-        % temporal
-        if self.isStcr & self.Weights.temporal ~= 0
-          self.update_temporal_term();
-        end
-        % Loop update
-        self.update_image_estimate();
-        self.update_masked_image_estimate(iIteration);
-
-        % debug
-        if self.debug
-          self.update_debug_vals(iIteration);
-          self.plot_norms(iIteration);
-        end
-      end
+      self@Critter.BaseReconstructor(kSpaceInput, fftObj, Opts)
     end
 
     function pre_allocate_loop_variables(self)
-      self.imageEstimate = self.imageInput;
       self.maskedImageEstimate = self.imageEstimate;
       if(self.debug)
         self.fidelityNorm = zeros(1, self.nIterations);
         self.spatialNorm = zeros(1, self.nIterations);
       end
+    end
+
+    function apply_constraints(self, iIteration)
+      self.update_fidelity_term();
+      self.update_spatial_term();
+      self.update_image_estimate();
+      self.update_masked_image_estimate(iIteration);
+    end
+
+    function debug_in_loop(self, iIteration)
+      self.update_debug_vals();
+      self.plot_norms(iIteration);
     end
 
     function update_fidelity_term(self)
@@ -130,10 +57,7 @@ classdef Scr < handle
       self.maskedImageEstimate = self.fftObject' * kSpaceEstimate;
     end
 
-    function finalImage = unscale_image(self)
-      finalImage = self.imageEstimate ./ self.scaleFactor;
-    end
-
+    % Debug functions
     function update_debug_vals(self, iIteration)
       self.fidelityNorm(iIteration) = sum(abs(self.fidelityUpdateTerm(:)).^2);
       self.spatialNorm(iIteration) = self.compute_spatial_norm();

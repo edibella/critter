@@ -24,7 +24,7 @@ function imageOutput = use_stcr(Data, Opts)
   % Obtain fftObj from Data, outside the loop
   fftObj = Data.fftObj;
 
-  % Reconstruct each 2D slice of kSpace into a 2D image
+  % Reconstruct each 3D slice of kSpace into a 3D image
   for iFrame = 1:nFrames
     kSpaceFrame = Data.kSpace(:,:,:,iFrame);
     scrObj = Critter.Stcr(kSpaceFrame, fftObj, Opts);

@@ -20,6 +20,14 @@ classdef Stcr < Critter.Scr
       end
     end
 
+    function apply_constraints(self, iIteration)
+      self.update_fidelity_term();
+      self.update_spatial_term();
+      self.update_temporal_term();
+      self.update_image_estimate();
+      self.update_masked_image_estimate(iIteration);
+    end
+
     function update_image_estimate(self)
       % Call super
       update_image_estimate@Critter.Scr(self);
