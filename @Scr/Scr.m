@@ -1,4 +1,15 @@
 classdef Scr < Critter.BaseReconstructor
+  % NOTE: Some of the naming here was tricky to figure out, so I probably
+  % haven't selected the best names. In particular, for the multi-coil stuff
+  % I often have two copies of important variables lying around a "3D" version
+  % and a "4D" version. Spatial (and temporal) TV is applied to a combined-coil
+  % "3D" imageEstimate, but for fidelity operations, I need the original "4D" version
+  % so that one (and its relatives) is marked by the suffix "RepTime" since it is just
+  % the image Estimate repeated in a time dimension to make it 4 dimensional hence
+  % imageEstimateRepTime
+  properties (Constant)
+    MULTI_COIL = false;
+  end
   properties
     maskedImageEstimate
     fidelityUpdateTerm
@@ -8,18 +19,46 @@ classdef Scr < Critter.BaseReconstructor
     spatialNorm
     spatialArray
     totalNorm
+
+    nCoil
+    multiCoil
+    senseMaps
+    imageEstimateRepTime
+    senseImageRepTime
+    senseMapsRepTime
+    conjSenseMapRepTime
+    invSenseMagImageRepTime
   end
   methods
     function self = Scr(kSpaceInput, fftObj, Opts)
       self@Critter.BaseReconstructor(kSpaceInput, fftObj, Opts)
+      % check multi-coil
+      if isfield(Opts, 'multiCoil')
+        self.multiCoil = Opts.multiCoil;
+      else
+        self.multiCoil = self.MULTI_COIL;
+      end
+
+      if Opts.multiCoil
+        self.senseMaps = Opts.senseMaps;
+      end
     end
 
-    function pre_allocate_loop_variables(self)
+    % Superclass method overwrites
+    function prep_for_loop(self)
+      % pre-allocate variables
       self.maskedImageEstimate = self.imageEstimate;
-      if(self.debug)
+
+      if self.debug
         self.fidelityNorm = zeros(1, self.nIterations);
         self.spatialNorm = zeros(1, self.nIterations);
       end
+
+      % prepare for multi coil stuff
+      if self.multiCoil
+        self.prep_multi_coil_vars();
+      end
+
     end
 
     function apply_constraints(self, iIteration)
@@ -34,9 +73,16 @@ classdef Scr < Critter.BaseReconstructor
       self.plot_norms(iIteration);
     end
 
+    % Methods for this class
     function update_fidelity_term(self)
       fidelityTerm = self.imageInput - self.maskedImageEstimate;
       self.fidelityUpdateTerm = self.Weights.fidelity * fidelityTerm;
+      % multi coil fidelity gives a 4d result above, so now we compress it to 3D
+      if self.multiCoil
+        senseFidelityUpdate = self.fidelityUpdateTerm .* self.conjSenseMapRepTime;
+        fidelitySumOfCoils = sum(senseFidelityUpdate, 4);
+        self.fidelityUpdateTerm = self.invSenseMagImageRepTime .* fidelitySumOfCoils;
+      end
     end
 
     function update_spatial_term(self)
@@ -53,8 +99,45 @@ classdef Scr < Critter.BaseReconstructor
     end
 
     function update_masked_image_estimate(self, iIteration)
-      kSpaceEstimate = self.fftObject * self.imageEstimate;
+      if self.multiCoil
+        self.imageEstimateRepTime = repmat(self.imageEstimate, [1 1 1 self.nCoil]);
+        self.senseImageRepTime = self.senseMapsRepTime .* self.imageEstimateRepTime;
+        kSpaceEstimate = self.fftObject * self.senseImageRepTime;
+      else
+        kSpaceEstimate = self.fftObject * self.imageEstimate;
+      end
       self.maskedImageEstimate = self.fftObject' * kSpaceEstimate;
+    end
+
+    % Multi coil functions
+    function prep_multi_coil_vars(self)
+      [nRow, nCol, nTime, self.nCoil] = size(self.imageEstimate);
+      self.senseMaps = self.scaleFactor * self.senseMaps;
+      conjSenseMaps = conj(self.senseMaps);
+      self.senseMapsRepTime = repmat(self.senseMaps,[1 1 1 nTime]);
+      self.senseMapsRepTime = permute(self.senseMapsRepTime, [1 2 4 3]);
+      self.conjSenseMapRepTime = single(conj(self.senseMapsRepTime));
+      invSenseMagImage = 1./sum(abs(self.senseMaps).^2,3);
+      self.invSenseMagImageRepTime = repmat(invSenseMagImage, [1 1 nTime]);
+
+      self.imageEstimate = single(zeros(nRow,nCol,nTime));
+
+      for i = 1:nTime
+        combinedImageCoils = single(zeros(nRow,nCol));
+        for j = 1:self.nCoil
+          conjSenseMapCoil = conjSenseMaps(:,:,j);
+          singleImageCoil = self.imageInput(:,:,i,j);
+          combinedImageCoils = combinedImageCoils + singleImageCoil .* conjSenseMapCoil;
+        end
+        self.imageEstimate(:,:,i) = invSenseMagImage .* combinedImageCoils;
+      end
+
+      self.imageEstimateRepTime = repmat(self.imageEstimate, [1 1 1 self.nCoil]);
+
+      % create self.maskedImageEstimate
+      self.senseImageRepTime = self.senseMapsRepTime .* self.imageEstimateRepTime;
+      senseKSpaceRepTime = self.fftObject * self.senseImageRepTime;
+      self.maskedImageEstimate = self.fftObject' * senseKSpaceRepTime;
     end
 
     % Debug functions

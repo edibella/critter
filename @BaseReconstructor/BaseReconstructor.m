@@ -66,7 +66,7 @@ classdef BaseReconstructor < handle
     function iteratively_reconstruct(self)
       % Pre-allocate imageEstimate and other subclass variables
       self.imageEstimate = self.imageInput;
-      self.pre_allocate_loop_variables();
+      self.prep_for_loop();
 
       % Loop for nIterations
       for iIteration = 1:self.nIterations
@@ -86,7 +86,7 @@ classdef BaseReconstructor < handle
     % end of superclass functions
     % The following are empty functions which can be overwritten in subclasses
     % or just left here to do nothing
-    function pre_allocate_loop_variables();
+    function prep_for_loop();
     end
     function apply_constraints(iIteration)
     end
