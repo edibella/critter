@@ -59,6 +59,7 @@ classdef BaseReconstructor < handle
 
     function scale_image_input(self)
       maxIntensity = max(abs(self.imageInput(:)));
+      self.MAGIC_SCALE_NUMBER
       self.scaleFactor = self.MAGIC_SCALE_NUMBER / maxIntensity;
       self.imageInput = single(self.imageInput * self.scaleFactor);
     end

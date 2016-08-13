@@ -21,10 +21,10 @@ function multi_coil_tests(Tester)
 
   % Signal that the multi-coil fidelity method should be used
   Opts.multiCoil = true;
+  presentResult = Critter.use_stcr(Data, Opts);
 
   % 1. Test STCR
   % `officialResult`
   load('multi_coil_stcr_result.mat')
-  presentResult = Critter.use_stcr(Data, Opts);
   Tester.test(officialResult, presentResult, 'Test multi-coil-stcr')
 end
