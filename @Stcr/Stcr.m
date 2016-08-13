@@ -9,9 +9,9 @@ classdef Stcr < Critter.Scr
       self@Critter.Scr(kSpaceInput, fftObj, Opts)
     end
 
-    function pre_allocate_loop_variables(self)
+    function prep_for_loop(self)
       % Call super
-      pre_allocate_loop_variables@Critter.Scr(self);
+      prep_for_loop@Critter.Scr(self);
       % Add to it the temporal term
       self.temporalUpdateTerm = zeros(size(self.imageEstimate), 'single');
       % and the debug term if needed
